@@ -7,8 +7,8 @@ import os
 import sys
 
 from geventwebsocket import WebSocketError
-from configurator import cfg
-import geigercounter
+from .configurator import cfg
+from . import geigercounter
 
 import logging
 
@@ -31,7 +31,7 @@ class WebSocketClientConnector():
         except WebSocketError:
             self.active = False
             log.error("could not write to socket %s (client %s)"%(self.ws,self.session_id))
-        except Exception, e:
+        except Exception as e:
             self.active = False
             log.error(e)
 

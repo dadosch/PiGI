@@ -1,4 +1,4 @@
-import ConfigParser
+import configparser
 import logging
 import sys,os,uuid
 
@@ -17,18 +17,18 @@ PATH_UUID = os.path.join(CONF_DIR,FILENAME_UUID)
 
 class Configurator():
     def __init__(self):
-        self.static_conf = ConfigParser.SafeConfigParser()
+        self.static_conf = configparser.SafeConfigParser()
         
         #uuid
         
         try:
             self.static_conf.readfp(open(PATH_UUID))
             log.info("node uuid: %s"%self.static_conf.get('node','uuid'))
-        except (IOError, ConfigParser.NoOptionError, ConfigParser.NoSectionError) as e:
+        except (IOError, configparser.NoOptionError, configparser.NoSectionError) as e:
             log.warn("No uuid set!")
             new_uuid = str(uuid.uuid1())
             log.warn("Setting new uuid: %s"%new_uuid)
-            self.static_conf = ConfigParser.SafeConfigParser()
+            self.static_conf = configparser.SafeConfigParser()
             self.static_conf.add_section('node')
             self.static_conf.set('node','uuid',new_uuid)
             with open(PATH_UUID,'wb') as f:
@@ -43,7 +43,7 @@ class Configurator():
             log.info('reading configuration %s'%f)
         
         
-        self.dynamic_conf = ConfigParser.SafeConfigParser()
+        self.dynamic_conf = configparser.SafeConfigParser()
         self.read_dynamic()
         
     def read_dynamic(self):
@@ -61,15 +61,15 @@ class Configurator():
         except OSError:
             pass
         
-        self.dynamic_conf = ConfigParser.SafeConfigParser()
+        self.dynamic_conf = configparser.SafeConfigParser()
         self.read_dynamic()
     
     def get(self,section,option):
         try:
             return self.dynamic_conf.get(section,option)
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             pass
-        except ConfigParser.NoSectionError:
+        except configparser.NoSectionError:
             pass
             
         return self.static_conf.get(section,option)
@@ -92,9 +92,9 @@ class Configurator():
             
     def set(self,section,option,value):
         if not self.static_conf.has_section(section):
-            raise ConfigParser.NoSectionError(section)
+            raise configparser.NoSectionError(section)
         if not self.static_conf.has_option(section,option):
-            raise ConfigParser.NoOptionError(option,section)
+            raise configparser.NoOptionError(option,section)
         if not self.dynamic_conf.has_section(section):
             self.dynamic_conf.add_section(section)
         self.dynamic_conf.set(section,option,value)
@@ -104,10 +104,10 @@ cfg = Configurator()
 if __name__ == "__main__":
     logging.basicConfig(level=1)
     cfg = Configurator()
-    print cfg.get('server','port')
+    print(cfg.get('server','port'))
     cfg.set('server','port','80')
-    print cfg.get('server','port')
+    print(cfg.get('server','port'))
     cfg.write_dynamic()
     cfg.read_dynamic()
-    print cfg.get('server','port')
+    print(cfg.get('server','port'))
     #print cfg.static_conf.get('server','2p')

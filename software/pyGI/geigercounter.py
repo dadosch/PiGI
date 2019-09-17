@@ -6,8 +6,8 @@ import datetime
 import logging
 
 from collections import deque
-from configurator import cfg
-from entropygenerator import EntropyGenerator
+from .configurator import cfg
+from .entropygenerator import EntropyGenerator
 
 log = logging.getLogger(__name__)
 

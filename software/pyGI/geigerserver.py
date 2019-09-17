@@ -8,10 +8,10 @@ import logging
 import os
 import sys
 
-from configurator import cfg
+from .configurator import cfg
 
-import geigercounter
-import geigerclient
+from . import geigercounter
+from . import geigerclient
 
 log=logging.getLogger(__name__)
 

@@ -7,7 +7,7 @@ import time
 import json
 import logging
 from collections import deque
-from configurator import cfg
+from .configurator import cfg
 
 log = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ def get_last_totalcount():
 
     # Check for empty leveldb instance
     try:
-        db.RangeIter(include_value=False).next()
+        next(db.RangeIter(include_value=False))
     except StopIteration:
         log.info("Empty LevelDB")
         return (0,0)
@@ -88,7 +88,9 @@ class GeigerLog(threading.Thread):
         log.info("Starting geigerlog")
         avg_age = dt2unix(datetime.now() - timedelta(minutes=15))
         avg_list = deque()
-        entries_list = list(self.db.RangeIter(key_from=str(avg_age)))
+        entries_list = None
+        print(str(avg_age))
+        print(list(self.db.RangeIter(key_from='1568755185')))
         for e in entries_list: avg_list.append(json.loads(e[1]))
         while True:
             time.sleep(LOG_WRITE_RATE)
@@ -152,7 +154,7 @@ class GeigerLog(threading.Thread):
 
             db_iter = self.db.RangeIter(key_from=str(t),fill_cache=True)
             try:
-                (timestamp,entry_json) = db_iter.next()
+                (timestamp,entry_json) = next(db_iter)
             except StopIteration:
                 break;
 
@@ -177,7 +179,7 @@ class GeigerLog(threading.Thread):
         if age:
             start = end - age
         elif start is None:
-            start = int(self.db.RangeIter(key_from="0",include_value=False).next())
+            start = int(next(self.db.RangeIter(key_from="0",include_value=False)))
 
         log.info("Fetching %s log entries from %d to %s"%(str(amount),start,end))
         
@@ -192,7 +194,7 @@ class GeigerLog(threading.Thread):
             entry_json = self.db.Get(key)
         except KeyError:
             try:
-                (key,entry_json) = self.db.RangeIter(key_from=str(int(ts))).next()
+                (key,entry_json) = next(self.db.RangeIter(key_from=str(int(ts))))
             except StopIteration:
                 log.ERROR("Annotation timestamp out of log range: %s"%key)
                 return
@@ -226,4 +228,4 @@ def dummy_entry(timestamp,total,total_dtc):
 
 
 if __name__ == "__main__":
-    print get_last_totalcount()
+    print(get_last_totalcount())
