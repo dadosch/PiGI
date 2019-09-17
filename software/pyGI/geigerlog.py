@@ -88,9 +88,7 @@ class GeigerLog(threading.Thread):
         log.info("Starting geigerlog")
         avg_age = dt2unix(datetime.now() - timedelta(minutes=15))
         avg_list = deque()
-        entries_list = None
-        print(str(avg_age))
-        print(list(self.db.RangeIter(key_from='1568755185')))
+        entries_list = list(self.db.RangeIter(key_from=str(avg_age)))
         for e in entries_list: avg_list.append(json.loads(e[1]))
         while True:
             time.sleep(LOG_WRITE_RATE)
