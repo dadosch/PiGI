@@ -31,7 +31,7 @@ class Configurator():
             self.static_conf = configparser.SafeConfigParser()
             self.static_conf.add_section('node')
             self.static_conf.set('node','uuid',new_uuid)
-            with open(PATH_UUID,'wb') as f:
+            with open(PATH_UUID,'w') as f:
                 self.static_conf.write(f)
         
         self.static_conf.readfp(open(PATH_DEFAULT))
@@ -52,7 +52,7 @@ class Configurator():
             log.info('reading configuration %s'%f)
         
     def write_dynamic(self):
-        with open(PATH_DYNAMIC,'wb') as f:
+        with open(PATH_DYNAMIC,'w') as f:
             self.dynamic_conf.write(f)
     
     def clear_dynamic(self):
