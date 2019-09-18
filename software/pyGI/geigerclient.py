@@ -103,16 +103,16 @@ class WebSocketClientConnector():
                     for field in ["lat","lon","alt","opmode"]:
                         val = msg["conf"].get(field)
                         if not val is None:
-                            cfg.set('node',field,str(val))
+                            cfg.set('node',field,val)
 
                     for field in ["window","source","sim_dose_rate"]:
                         val = msg["conf"].get(field)
                         if not val is None:
-                            cfg.set('geigercounter',field,str(val))
+                            cfg.set('geigercounter',field,val)
 
                     entropy_enable = msg["conf"].get("entropy")
                     if not entropy_enable is None:
-                        cfg.set('entropy','enable',str(entropy_enable))
+                        cfg.set('entropy','enable',entropy_enable)
 
                     cfg.write_dynamic()
                     cfg.read_dynamic()

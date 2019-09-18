@@ -19,6 +19,12 @@ script_dir = sys.path[0]
 def dt2unix(dt):
     return int(dt.strftime("%s"))
 
+def int_to_bytes(int):
+    return (int).to_bytes(int.bit_length(), byteorder='big')
+
+def bytes_to_int(bytes):
+    return int.from_bytes(bytes, byteorder='big')
+
 def get_last_totalcount():
 
     log.info("Getting last totalcount")
@@ -38,7 +44,7 @@ def get_last_totalcount():
     while not last_entries_keys:
 
         log.debug("Searching further (%d)..."%d)
-        last_entries_keys = list(db.RangeIter(key_from=str(now-d),include_value=False))
+        last_entries_keys = list(db.RangeIter(key_from=int_to_bytes(now-d),include_value=False))
 
         d = d*2
         i = i+1
@@ -88,7 +94,7 @@ class GeigerLog(threading.Thread):
         log.info("Starting geigerlog")
         avg_age = dt2unix(datetime.now() - timedelta(minutes=15))
         avg_list = deque()
-        entries_list = list(self.db.RangeIter(key_from=str(avg_age)))
+        entries_list = list(self.db.RangeIter(key_from=int_to_bytes(avg_age)))
         for e in entries_list: avg_list.append(json.loads(e[1]))
         while True:
             time.sleep(LOG_WRITE_RATE)
@@ -101,33 +107,35 @@ class GeigerLog(threading.Thread):
             avg_list.append(state)
             avg = round(sum([e["data"]["edr"] for e in avg_list])/len(avg_list),3)
             state["data"]["edr_avg"] = avg
-            key = str(state["timestamp"])
-            value = json.dumps(state)
+            key = int_to_bytes(state["timestamp"])
+            value = json.dumps(state).encode('utf-8')
             self.db.Put(key, value)
             self.last_log = state
             log.debug("Logging: %s : %s"%(key,value))
-            log.debug(self.db.GetStats())
+            #log.debug(self.db.GetStats())
     
     def get_log_entries_all(self,start,end):
         result = []
-        entries_list = list(self.db.RangeIter(key_from=str(start),fill_cache=True))
+        entries_list = list(self.db.RangeIter(key_from=int_to_bytes(start),fill_cache=True))
         last_time = start
         for e in entries_list:
             entry = json.loads(e[1])
-            if int(entry["timestamp"])-last_time > MAX_ENTRY_DIST:
+            timestamp = int(entry["timestamp"])
+            if timestamp-last_time > MAX_ENTRY_DIST:
                 insert_time = last_time + LOG_WRITE_RATE
                 record_insert = dummy_entry(insert_time,entry['data']['totalcount'],entry['data']['totalcount_dtc'])
-                while insert_time < int(entry["timestamp"]):
+                while insert_time < timestamp:
                     result.append(record_insert.copy())
                     insert_time += 10
                     record_insert["timestamp"]=insert_time
-            last_time = int(entry["timestamp"])
+            last_time = timestamp
             result.append(entry)
 
         if result:
             last = result[-1]
-            if end - int(last["timestamp"]) > MAX_ENTRY_DIST:
-                insert_time = int(last["timestamp"]) + LOG_WRITE_RATE
+            timestamp = int(last["timestamp"])
+            if end - timestamp > MAX_ENTRY_DIST:
+                insert_time = timestamp + LOG_WRITE_RATE
                 record_insert = dummy_entry(insert_time,entry['data']['totalcount'],entry['data']['totalcount_dtc'])
                 while insert_time < end:
                     result.append(record_insert.copy())
@@ -145,12 +153,12 @@ class GeigerLog(threading.Thread):
             if t > end: break
             if step >= 1:
                 t_prev = start + delta_step * (step - 1)
-                annotation_keys = list(self.db_annotation.RangeIter(key_from=str(t_prev),key_to=str(t),include_value=False))
+                annotation_keys = list(self.db_annotation.RangeIter(key_from=int_to_bytes(int(t_prev)),key_to=int_to_bytes(int(t)),include_value=False))
                 if annotation_keys:
                     for key in annotation_keys:
                         result.append(json.loads(self.db.Get(key)))
 
-            db_iter = self.db.RangeIter(key_from=str(t),fill_cache=True)
+            db_iter = self.db.RangeIter(key_from=int_to_bytes(int(t)),fill_cache=True)
             try:
                 (timestamp,entry_json) = next(db_iter)
             except StopIteration:
@@ -158,7 +166,7 @@ class GeigerLog(threading.Thread):
 
             entry = json.loads(entry_json)
 
-            if int(timestamp)-t>MAX_ENTRY_DIST:
+            if bytes_to_int(timestamp)-t>MAX_ENTRY_DIST:
                 entry=dummy_entry(t,entry['data']['totalcount'],entry['data']['totalcount_dtc'])
 
 
@@ -177,7 +185,7 @@ class GeigerLog(threading.Thread):
         if age:
             start = end - age
         elif start is None:
-            start = int(next(self.db.RangeIter(key_from="0",include_value=False)))
+            start = bytes_to_int(next(self.db.RangeIter(key_from=int_to_bytes(int(0)),include_value=False)))
 
         log.info("Fetching %s log entries from %d to %s"%(str(amount),start,end))
         
@@ -188,11 +196,11 @@ class GeigerLog(threading.Thread):
     
     def set_annotation(self,ts,text):
         try:
-            key = str(int(ts))
+            key = int_to_bytes(int(ts))
             entry_json = self.db.Get(key)
         except KeyError:
             try:
-                (key,entry_json) = next(self.db.RangeIter(key_from=str(int(ts))))
+                (key,entry_json) = next(self.db.RangeIter(key_from=int_to_bytes(int(ts))))
             except StopIteration:
                 log.ERROR("Annotation timestamp out of log range: %s"%key)
                 return
