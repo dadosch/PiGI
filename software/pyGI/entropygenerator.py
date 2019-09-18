@@ -58,7 +58,7 @@ class EntropyGenerator(threading.Thread):
 
 
     def handle_bitstring(self):
-        with open(self.outfile, "ab") as f:
+        with open(self.outfile, "a") as f:
             while len(self.bitstring)>=8:
                 byte_bin = self.bitstring[:8]
                 self.bitstring = self.bitstring[8:]
