@@ -206,10 +206,10 @@ class GeigerLog(threading.Thread):
                 return
         entry = json.loads(entry_json)
         entry['annotation'] = text
-        entry_json = json.dumps(entry)
+        entry_json = json.dumps(entry).encode('utf-8')
         self.db.Put(key,entry_json)
         if text:
-            self.db_annotation.Put(key,text)
+            self.db_annotation.Put(key,text.encode('utf-8'))
         else:
             self.db_annotation.Delete(key)
         

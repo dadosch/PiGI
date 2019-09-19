@@ -75,7 +75,7 @@ class WebSocketClientConnector():
                     ts = msg.get("timestamp")
                     text = msg.get("text")
                     handler.geigerlog.set_annotation(ts,text)
-                    handler.send_log(start=age_from,end=age_to,amount=1000,static=True)
+                    handler.send_log(self,start=age_from,end=age_to,amount=1000,static=True)
 
                 #Config
                 elif cmd == "get":
@@ -103,16 +103,16 @@ class WebSocketClientConnector():
                     for field in ["lat","lon","alt","opmode"]:
                         val = msg["conf"].get(field)
                         if not val is None:
-                            cfg.set('node',field,val)
+                            cfg.set('node',field,str(val))
 
                     for field in ["window","source","sim_dose_rate"]:
                         val = msg["conf"].get(field)
                         if not val is None:
-                            cfg.set('geigercounter',field,val)
+                            cfg.set('geigercounter',field,str(val))
 
                     entropy_enable = msg["conf"].get("entropy")
                     if not entropy_enable is None:
-                        cfg.set('entropy','enable',entropy_enable)
+                        cfg.set('entropy','enable',str(entropy_enable))
 
                     cfg.write_dynamic()
                     cfg.read_dynamic()
